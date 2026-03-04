@@ -38,11 +38,14 @@
     "sandbox:image:win:mac": "bash scripts/build-sandbox-image-win-on-mac.sh",
     "sandbox:image:docker": "bash scripts/build-sandbox-image-docker.sh",
     "clean:release": "rimraf release",
-    "generate:tray-icons": "node scripts/generate-tray-icons.js",
+    "generate:icons": "node scripts/generate-all-icons.js",
+    "generate:app-icons": "node scripts/generate-icons-trimmed.js",
+    "generate:tray-icons": "node scripts/generate-tray-icons-sharp.js",
     "setup:mingit": "node scripts/setup-mingit.js",
     "setup:python-runtime": "node scripts/setup-python-runtime.js",
     "regenerate:icon": "bash scripts/regenerate-mac-icon.sh",
-    "fix:mac-icon": "bash scripts/fix-mac-icon-display.sh"
+    "fix:mac-icon": "bash scripts/fix-mac-icon-display.sh",
+    "generate:app-icons": "node scripts/generate-icons-trimmed.js"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "0.2.12",
@@ -107,6 +110,7 @@
     "postcss": "^8.4.35",
     "rimraf": "^5.0.5",
     "rss-parser": "^3.13.0",
+    "sharp": "^0.34.5",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.7.3",
     "vite": "^5.1.4",
