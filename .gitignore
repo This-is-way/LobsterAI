@@ -31,6 +31,9 @@ SKILLs/**/.server.log
 SKILLs/**/.server.pid
 SKILLs/**/.venv/
 
+# Bundled sandbox resources (downloaded via scripts/download-sandbox-components.js)
+sandbox-resources/
+
 package-lock.json
 
 nul

@@ -183,9 +183,10 @@ const normalizeBaseUrl = (baseUrl: string): string => baseUrl.trim().replace(/\/
 const normalizeApiFormat = (value: unknown): 'anthropic' | 'openai' => (
   value === 'openai' ? 'openai' : 'anthropic'
 );
-const ABOUT_CONTACT_EMAIL = 'lobsterai.project@rd.netease.com';
-const ABOUT_USER_MANUAL_URL = 'https://lobsterai.youdao.com/#/docs/lobsterai_user_manual';
-const ABOUT_SERVICE_TERMS_URL = 'https://c.youdao.com/dict/hardware/lobsterai/lobsterai_service.html';
+//todo: mode this config
+const ABOUT_CONTACT_EMAIL = '不想告诉你';
+const ABOUT_USER_MANUAL_URL = '你猜我会不会写文档';
+const ABOUT_SERVICE_TERMS_URL = '牛马还要隐私???';
 
 const copyTextFallback = (text: string): boolean => {
   const textarea = document.createElement('textarea');
@@ -2732,12 +2733,12 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice }) => {
                 </button>
               </div>
 
-              <p className="mt-5 text-xs dark:text-claude-darkTextSecondary text-claude-textSecondary">
+              {/* <p className="mt-5 text-xs dark:text-claude-darkTextSecondary text-claude-textSecondary">
                 {language === 'zh' ? '网易有道 版权所有' : 'NetEase Youdao. All rights reserved.'}
               </p>
               <p className="mt-1 text-xs dark:text-claude-darkTextSecondary text-claude-textSecondary">
                 Copyright &copy; {new Date().getFullYear()} NetEase Youdao. All Rights Reserved.
-              </p>
+              </p> */}
             </div>
           </div>
         );

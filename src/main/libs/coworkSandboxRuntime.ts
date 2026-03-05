@@ -128,6 +128,49 @@ function getSandboxPaths() {
   return { baseDir, runtimeDir, imageDir, runtimeBinary, imagePath };
 }
 
+/**
+ * Get bundled sandbox resources path (packaged with the app)
+ * Returns null if bundled resources don't exist
+ */
+function getBundledSandboxPaths(): { runtimePath: string | null; imagePath: string | null } {
+  try {
+    // Check if we're running in packaged app
+    const appPath = app.getAppPath();
+    const resourcesPath = process.resourcesPath; // In asar, this points to extracted resources
+
+    const platformKey = `${process.platform}-${process.arch}`;
+    const bundledDir = path.join(resourcesPath, 'sandbox-resources', platformKey);
+
+    if (!fs.existsSync(bundledDir)) {
+      return { runtimePath: null, imagePath: null };
+    }
+
+    // Runtime file names
+    let runtimeFileName: string;
+    if (process.platform === 'darwin') {
+      runtimeFileName = process.arch === 'arm64' ? 'qemu-system-aarch64.gz' : 'qemu-system-x86_64.gz';
+    } else if (process.platform === 'win32') {
+      runtimeFileName = 'qemu-system-x86_64.exe.gz';
+    } else {
+      return { runtimePath: null, imagePath: null };
+    }
+
+    // Image file names
+    const imageFileName = process.arch === 'arm64' ? 'alpine-arm64.qcow2' : 'alpine-amd64.qcow2';
+
+    const bundledRuntime = path.join(bundledDir, runtimeFileName);
+    const bundledImage = path.join(bundledDir, imageFileName);
+
+    return {
+      runtimePath: fs.existsSync(bundledRuntime) ? bundledRuntime : null,
+      imagePath: fs.existsSync(bundledImage) ? bundledImage : null,
+    };
+  } catch (error) {
+    console.warn('[Sandbox] Failed to check bundled resources:', error);
+    return { runtimePath: null, imagePath: null };
+  }
+}
+
 function getRuntimeUrl(platformKey: string): string | null {
   if (SANDBOX_RUNTIME_URL) {
     return SANDBOX_RUNTIME_URL;
@@ -622,6 +665,44 @@ async function ensureRuntime(): Promise<string> {
     throw new Error('Sandbox VM is not supported on this platform.');
   }
 
+  // First, try to use bundled resources (packaged with the app)
+  const bundled = getBundledSandboxPaths();
+  if (bundled.runtimePath) {
+    console.log('[Sandbox] Using bundled runtime:', bundled.runtimePath);
+    const { runtimeDir, runtimeBinary } = getSandboxPaths();
+
+    // Extract bundled runtime to user data directory
+    await fs.promises.mkdir(runtimeDir, { recursive: true });
+
+    if (await isGzipFile(bundled.runtimePath)) {
+      const tempPath = `${runtimeBinary}.tmp`;
+      await extractGzipBinary(bundled.runtimePath, tempPath);
+
+      if (await isTarFile(tempPath)) {
+        extractTarArchive(tempPath, runtimeDir);
+        await fs.promises.unlink(tempPath);
+      } else {
+        await fs.promises.rename(tempPath, runtimeBinary);
+      }
+    } else {
+      await fs.promises.copyFile(bundled.runtimePath, runtimeBinary);
+    }
+
+    const finalResolved = resolveRuntimeBinary(runtimeDir, runtimeBinary);
+    if (finalResolved) {
+      if (process.platform !== 'win32') {
+        try {
+          fs.chmodSync(finalResolved, 0o755);
+        } catch (error) {
+          console.warn('Failed to chmod sandbox runtime binary:', error);
+        }
+      }
+      ensureHypervisorEntitlement(finalResolved, runtimeDir);
+      console.log('[Sandbox] Bundled runtime installed successfully');
+      return finalResolved;
+    }
+  }
+
   const { runtimeDir, runtimeBinary } = getSandboxPaths();
   const resolvedBinary = resolveRuntimeBinary(runtimeDir, runtimeBinary);
   if (resolvedBinary) {
@@ -826,6 +907,16 @@ async function ensureRuntime(): Promise<string> {
 async function ensureImage(): Promise<string> {
   const { imageDir, imagePath } = getSandboxPaths();
   if (fs.existsSync(imagePath)) {
+    return imagePath;
+  }
+
+  // Try to use bundled image (packaged with the app)
+  const bundled = getBundledSandboxPaths();
+  if (bundled.imagePath) {
+    console.log('[Sandbox] Using bundled image:', bundled.imagePath);
+    await fs.promises.mkdir(imageDir, { recursive: true });
+    await fs.promises.copyFile(bundled.imagePath, imagePath);
+    console.log('[Sandbox] Bundled image installed successfully');
     return imagePath;
   }
 

@@ -3650,13 +3650,21 @@ export class CoworkRunner extends EventEmitter {
           accelOverride = 'tcg';
           continue;
         }
-        // HVF acceleration unavailable - instead of using slow TCG emulation,
-        // throw an error to trigger fallback to local execution mode
+        // On macOS development builds without proper entitlements, HVF is unavailable.
+        // Instead of using slow TCG emulation with incomplete QEMU installations,
+        // provide clear guidance to the user.
         this.addSystemMessage(
           sessionId,
-          'HVF acceleration is unavailable. Falling back to local execution mode for better performance.'
+          '⚠️ Hypervisor acceleration unavailable.\n\n' +
+          'In development mode, sandbox requires:\n' +
+          '1. Hypervisor entitlements (only available in production builds)\n' +
+          '2. Complete QEMU installation with BIOS files\n\n' +
+          '💡 Recommendations:\n' +
+          '• For development: Use "Local" execution mode (fast, fully functional)\n' +
+          '• To test sandbox: Build production app (npm run dist:mac)\n\n' +
+          'Switching to local mode...'
         );
-        throw new Error('HVF unavailable, fallback to local mode');
+        throw new Error('HVF unavailable in development, use local mode instead');
       }
 
       throw new Error(result.message);

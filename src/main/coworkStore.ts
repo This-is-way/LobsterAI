@@ -816,7 +816,7 @@ export class CoworkStore {
     return {
       workingDirectory: workingDirRow?.value || getDefaultWorkingDirectory(),
       systemPrompt: getDefaultSystemPrompt(),
-      executionMode: normalizedExecutionMode || 'local',
+      executionMode: normalizedExecutionMode || 'sandbox',
       memoryEnabled: parseBooleanConfig(memoryEnabledRow?.value, DEFAULT_MEMORY_ENABLED),
       memoryImplicitUpdateEnabled: parseBooleanConfig(
         memoryImplicitUpdateEnabledRow?.value,
